@@ -35,13 +35,13 @@ namespace SharpDocx.Extensions
         {
             foreach (var child in e.ChildElements)
             {
+                if (child is T)
+                {
+                    list.Add(child as T);
+                }
                 if (child.HasChildren)
                 {
                     GetAllElementsRecursive(child as OpenXmlElement, list);
-                }
-                else if (child is T)
-                {
-                    list.Add(child as T);
                 }
             }
         }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
-using SharpDocx.Extensions;
 
 namespace SharpDocx
 {
@@ -25,12 +24,12 @@ namespace SharpDocx
             {
                 elementsToMove.Add(element);
             }
-            
+
             foreach (var element in elementsToMove)
             {
                 element.Remove();
 
-                if (element is OpenXmlCompositeElement ce && ce.HasText())
+                if (element is OpenXmlCompositeElement ce) // && ce.HasText())
                 {
                     // Ignore empty paragraphs.
                     insertionPoint = insertionPoint.InsertAfterSelf(ce);
@@ -77,7 +76,7 @@ namespace SharpDocx
         private void CreateNewWorkingBody()
         {
             _workingBody = _templateBody.Clone() as Body;
-            
+
             // The working body should *always* contain the placeholders.
             // So copy the placeholders to the new working body.
             var clonedPlaceholders = GetPlaceholders(_workingBody);
@@ -86,7 +85,7 @@ namespace SharpDocx
             {
                 // Make a copy of the placeholder and insert this copy in the document.
                 _placeholders[i].InsertAfterSelf(_placeholders[i].Clone() as Text);
-                
+
                 // Remove the original placeholder from the document and reset the it.
                 _placeholders[i].Remove();
                 _placeholders[i].Text = null;
