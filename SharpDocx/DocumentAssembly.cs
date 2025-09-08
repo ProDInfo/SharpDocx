@@ -39,8 +39,8 @@ namespace SharpDocx
                 throw new ArgumentNullException(nameof(baseClass));
             }
 
-            // Load base class assembly.
-            var a = Assembly.LoadFrom(baseClass.Assembly.Location);
+            // Get the base class assembly.
+            var a = baseClass.Assembly;
             if (a == null)
             {
                 throw new ArgumentException($"Can't load assembly '{baseClass.Assembly}'", nameof(baseClass));
