@@ -403,6 +403,11 @@ namespace {Namespace}
 
         private static string FormatType(Type type)
         {
+            if (type == typeof(object))
+            {
+                return "dynamic";
+            }
+            
 #if NET45_OR_GREATER
             if (type.IsConstructedGenericType)
             {
