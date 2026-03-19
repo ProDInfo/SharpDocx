@@ -53,6 +53,12 @@ namespace SharpDocx.CodeBlocks
 
         private bool CanDeleteParagraph(Paragraph paragraph)
         {
+            if (paragraph.Descendants<SectionProperties>().Any())
+            {
+                // Keep section break paragraphs to preserve header/footer references.
+                return false;
+            }
+
             if (paragraph.Parent is TableCell)
             {
                 // TableCell should have at least one paragraph element.

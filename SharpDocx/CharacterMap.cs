@@ -178,6 +178,21 @@ namespace SharpDocx
             IsDirty = dirty;
         }
 
+        private static bool IsSectionBoundaryElement(OpenXmlElement element)
+        {
+            if (element is SectionProperties)
+            {
+                return true;
+            }
+
+            if (element is Paragraph paragraph && paragraph.Descendants<SectionProperties>().Any())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void Replace(MapPart part, string newText)
         {
             var startText = this[part.StartIndex].Element as Text;
@@ -200,6 +215,11 @@ namespace SharpDocx
                 if (parents.Contains(element))
                 {
                     // Do not remove parents.
+                    continue;
+                }
+
+                if (IsSectionBoundaryElement(element))
+                {
                     continue;
                 }
 
@@ -274,6 +294,11 @@ namespace SharpDocx
                     continue;
                 }
 
+                if (IsSectionBoundaryElement(element))
+                {
+                    continue;
+                }
+
                 if (element == startText)
                 {
                     startText.Space = SpaceProcessingModeValues.Preserve;
@@ -332,6 +357,11 @@ namespace SharpDocx
                 if (parents.Contains(element))
                 {
                     // Do not remove parents.
+                    continue;
+                }
+
+                if (IsSectionBoundaryElement(element))
+                {
                     continue;
                 }
 
