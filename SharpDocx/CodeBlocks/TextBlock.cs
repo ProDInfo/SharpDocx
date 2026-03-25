@@ -76,16 +76,23 @@ namespace SharpDocx.CodeBlocks
             }
 
             // ── Opening wrapper paragraph ─────────────────────────────────────────
+            // Use template-level info: StartText.Text holds the text that was BEFORE <%
+            // in the original template. If empty, there is no genuine prefix and the
+            // paragraph should always be removed (avoids false positives from HasText()
+            // picking up placeholder clone artifacts).
+            bool hasPrefix = (StartText?.Text?.Length ?? 0) > 0;
+
             if (!ParagraphHasSectionProperties(first))
             {
-                if (!first.HasText())
+                if (!hasPrefix)
                 {
+                    // No genuine prefix text → always remove the opening wrapper.
                     first.Remove();
                 }
                 else
                 {
-                    // Prefix text before the opening tag: merge into the first content paragraph,
-                    // but only when there is at least one content paragraph between first and last.
+                    // Has prefix text before <% → merge into first content paragraph,
+                    // but only when there is a content paragraph between first and last.
                     var firstNext = first.NextSibling() as Paragraph;
                     if (firstNext != null && firstNext != last)
                     {
@@ -97,32 +104,35 @@ namespace SharpDocx.CodeBlocks
             if (last.Parent == null || ParagraphHasSectionProperties(last)) return;
 
             // ── Closing wrapper paragraph ─────────────────────────────────────────
-            if (!last.HasText())
+            // Use template-level info: suffix = text after %>; contentBefore = text before <% } %>.
+            bool hasSuffix = (EndingCodeBlock.EndText?.Text?.Length ?? 0) > 0;
+            bool hasContentBefore = (EndingCodeBlock.StartText?.Text?.Length ?? 0) > 0;
+
+            if (!hasSuffix && !hasContentBefore)
             {
+                // No genuine text → always remove the closing wrapper.
                 var newLast = last.PreviousSibling() as OpenXmlCompositeElement;
                 last.Remove();
                 if (newLast != null)
                     CurrentInsertionPoint.Element = newLast;
             }
-            else
+            else if (hasSuffix && !hasContentBefore)
             {
-                // Only merge when the text comes exclusively from the suffix after %>,
-                // i.e. nothing appeared BEFORE the closing <% } %> tag in the template.
-                bool hasSuffix = (EndingCodeBlock.EndText?.Text?.Length ?? 0) > 0;
-                bool hasContentBefore = (EndingCodeBlock.StartText?.Text?.Length ?? 0) > 0;
-
-                if (hasSuffix && !hasContentBefore)
+                // Only suffix text after %> → merge into previous content paragraph.
+                var lastPrev = last.PreviousSibling() as Paragraph;
+                if (lastPrev != null)
                 {
-                    var lastPrev = last.PreviousSibling() as Paragraph;
-                    if (lastPrev != null)
-                    {
-                        var newLast = lastPrev as OpenXmlCompositeElement;
-                        MergeIntoPreviousParagraph(last);
-                        CurrentInsertionPoint.Element = newLast;
-                    }
+                    var newLast = lastPrev as OpenXmlCompositeElement;
+                    MergeIntoPreviousParagraph(last);
+                    CurrentInsertionPoint.Element = newLast;
                 }
-                // else: content before closing tag → keep paragraph as-is
+                else
+                {
+                    // No previous paragraph to merge into → just remove.
+                    last.Remove();
+                }
             }
+            // else: hasContentBefore == true → keep the paragraph (it has real content).
         }
 
         // Moves all non-ParagraphProperties children of source to the beginning
